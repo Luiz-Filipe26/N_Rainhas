@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Rainhas Problema</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            border: 2px solid #000;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input {
+            padding: 8px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="nRainhasForm">
+        <div class="form-group">
+            <label for="queens">Digite o número de rainhas:</label>
+            <input type="text" id="queens">
+        </div>
+
+        <div class="form-group">
+            <label for="width">Digite a largura do tabuleiro:</label>
+            <input type="text" id="width">
+        </div>
+
+        <div class="form-group">
+            <label for="height">Digite a altura do tabuleiro:</label>
+            <input type="text" id="height">
+        </div>
+
+        <button type="submit">Achar solução</button>
+    </form>
+
+    <script src="./logic.js" type="module"></script>
+</body>
+
+</html>
