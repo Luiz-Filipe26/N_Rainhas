@@ -1,9 +1,7 @@
-function create2DArray(width, height, defaultValue) {
-    return new Array(width).fill(null).map(() => new Array(height).fill(defaultValue));
-}
-
-function copy2DArray(array) {
-    return array.map(row => [...row]);
+const BOARD_CELL_STATE = {
+    OPEN: 0,
+    QUEEN: 2,
+    CLOSED: 1
 }
 
 document.getElementById("nRainhasForm").addEventListener("submit", (event) => {
@@ -18,46 +16,80 @@ document.getElementById("nRainhasForm").addEventListener("submit", (event) => {
         return;
     }
 
-    const board = create2DArray(width, height, '_');
+    const solutionBoard = findPossibleSolution(queens, width, height);
 
-    for (let i = 0; i < queens; i++) {
-        const randomWidth = Math.random() * (width - 1);
-        const randomHeight = Math.random() * (height - 1);
-
-    }
+    console.log(solutionBoard);
 });
 
+function create2DArray(width, height, defaultValue) {
+    return new Array(width).fill(null).map(() => new Array(height).fill(defaultValue));
+}
+
+function copy2DArray(array) {
+    return array.map(row => [...row]);
+}
+
+function findPossibleSolution(queens, width, height) {
+    let leadingCells = width * height;
+
+    let currentBoard = create2DArray(width, height, BOARD_CELL_STATE.OPEN);
+
+    for (let i = 0; i < queens || leadingCells == 0; i++) {
+        const { minClosedCells, bestBoard } = findBestPosition(currentBoard);
+        leadingCells -= (minClosedCells + 1); //including the queen
+        currentBoard = bestBoard;
+    }
+
+    return currentBoard;
+}
+
 function findBestPosition(board) {
-    let minInvalidCells = Number.MAX_VALUE;
+    let minClosedCells = Number.MAX_VALUE;
     let bestBoard = null;
 
-    for (boardColumn of boardCopy) {
-
-        for (boardCell of boardColumn) {
-            const {newBoard, invalidCells} = testPosition(board, boardColumn, boardCell);
-            if(invalidCells < minInvalidCells) {
-                minInvalidCells = invalidCells;
+    for (let y = 0; y < board.length; y++) { //line
+        for (let x = 0; x < board[y].length; x++) { //column
+            const { newBoard, closedCells } = testPosition(board, x, y);
+            if (closedCells < minClosedCells) {
+                minClosedCells = closedCells;
                 bestBoard = newBoard;
             }
         }
     }
 
-    return {numOfInvalidCells: minInvalidCells, bestBoard: bestBoard};
+    return { minClosedCells, bestBoard };
 }
 
 function testPosition(board, x, y) {
-    const boardCopy = copy2DArray(board);
-    let invalidCells = 0;
+    const newBoard = copy2DArray(board);
+    let closedCells = 0;
 
-    for(let i=0; i<board.length; i++) {
-        for(let j=0; j<board[i].length; j++) {
-            if(boardCopy[i][j] == 'X') {
-                invalidCells++;
-            }
-            else if(i - x == 0 || j - y == 0 || i - x == j - y) {
-                boardCopy[i][j] = 'X';
-                invalidCells++;
+    newBoard[x][y] = BOARD_CELL_STATE.QUEEN;
+
+    for (let stepY = -1; stepY <= 1; stepY++) {
+        for (let stepX = -1; stepX <= 1; stepX++) {
+            if (stepX != 0 || stepY != 0) {
+                closedCells += traverseStraightPath(newBoard, x, y, stepX, stepY);
             }
         }
     }
+
+    return { newBoard, closedCells }
+}
+
+function traverseStraightPath(board, posX, posY, stepX, stepY) {
+    let closedCells = 0;
+    let x = posX + stepX;
+    let y = posY + stepY;
+
+    while (x >= 0 && x < board[0].length && y >= 0 && y < board.length) {
+        if (board[y][x] === BOARD_CELL_STATE.OPEN) {
+            board[y][x] = BOARD_CELL_STATE.CLOSED;
+            closedCells++;
+        }
+        x += stepX;
+        y += stepY;
+    }
+
+    return closedCells;
 }
