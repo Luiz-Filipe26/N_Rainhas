@@ -4,7 +4,7 @@ const BOARD_CELL_STATE = {
     CLOSED: 1
 }
 
-document.getElementById("nRainhasForm").addEventListener("submit", (event) => {
+document.getElementById("nRainhasForm").addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const queens = parseInt(document.getElementById("queens").value);
@@ -16,32 +16,95 @@ document.getElementById("nRainhasForm").addEventListener("submit", (event) => {
         return;
     }
 
-    const solutionBoard = findPossibleSolution(queens, width, height);
+    const steps = findPossibleSolution(queens, width, height);
 
-    console.log(solutionBoard);
+    const numberOfQueens = steps.length > 0
+        ? steps[steps.length - 1].flatMap(row => row)
+            .reduce((sum, cell) => cell == BOARD_CELL_STATE.QUEEN ? sum + 1 : sum, 0)
+        : 0;
+
+    console.log(`Number of queens: ${numberOfQueens}`);
+    console.log(steps[steps.length - 1]);
+
+    await visualizeSteps(steps, 500); // Exibição automática com 500ms entre os passos
 });
 
-function create2DArray(width, height, defaultValue) {
-    return new Array(width).fill(null).map(() => new Array(height).fill(defaultValue));
+async function visualizeSteps(steps, delay = 500) {
+    for (const step of steps) {
+        drawBoard(step);
+        await sleep(delay);
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+function create2DArray(rows, cols, defaultValue) {
+    return new Array(rows).fill(null).map(() => new Array(cols).fill(defaultValue));
 }
 
 function copy2DArray(array) {
     return array.map(row => [...row]);
 }
 
+function drawBoard(board) {
+    const container = document.getElementById("boardContainer");
+    container.innerHTML = "";
+
+    const rows = board.length;
+    const cols = board[0].length;
+
+    container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+    container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+
+            switch (board[y][x]) {
+                case BOARD_CELL_STATE.OPEN:
+                    cell.classList.add("open");
+                    break;
+                case BOARD_CELL_STATE.CLOSED:
+                    cell.classList.add("closed");
+                    break;
+                case BOARD_CELL_STATE.QUEEN:
+                    cell.classList.add("queen");
+                    cell.textContent = "♛";
+                    break;
+            }
+
+            container.appendChild(cell);
+        }
+    }
+}
+
 function findPossibleSolution(queens, width, height) {
+    const steps = [];
+
     let leadingCells = width * height;
+    let currentBoard = create2DArray(height, width, BOARD_CELL_STATE.OPEN);
+    let placedQueens = 0;
 
-    let currentBoard = create2DArray(width, height, BOARD_CELL_STATE.OPEN);
-
-    for (let i = 0; i < queens || leadingCells == 0; i++) {
+    while (placedQueens < queens && leadingCells > 0) {
         const { minClosedCells, bestBoard } = findBestPosition(currentBoard);
-        leadingCells -= (minClosedCells + 1); //including the queen
+
+        if (!bestBoard) break;
+
+        leadingCells -= (minClosedCells + 1);
         currentBoard = bestBoard;
+        placedQueens++;
+
+        steps.push(copy2DArray(currentBoard));
     }
 
-    return currentBoard;
+    return steps;
 }
+
+
 
 function findBestPosition(board) {
     let minClosedCells = Number.MAX_VALUE;
@@ -49,6 +112,10 @@ function findBestPosition(board) {
 
     for (let y = 0; y < board.length; y++) { //line
         for (let x = 0; x < board[y].length; x++) { //column
+            if (board[y][x] !== BOARD_CELL_STATE.OPEN) {
+                continue;
+            }
+
             const { newBoard, closedCells } = testPosition(board, x, y);
             if (closedCells < minClosedCells) {
                 minClosedCells = closedCells;
@@ -64,7 +131,7 @@ function testPosition(board, x, y) {
     const newBoard = copy2DArray(board);
     let closedCells = 0;
 
-    newBoard[x][y] = BOARD_CELL_STATE.QUEEN;
+    newBoard[y][x] = BOARD_CELL_STATE.QUEEN;
 
     for (let stepY = -1; stepY <= 1; stepY++) {
         for (let stepX = -1; stepX <= 1; stepX++) {
