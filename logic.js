@@ -117,7 +117,7 @@ function findBestPosition(board) {
 
             const newBoard = testPosition(board, x, y);
             const heuristicValue = heuristicFunction(newBoard);
-            if (heuristicValue >= maxHeuristicValue) {
+            if (heuristicValue > maxHeuristicValue) {
                 maxHeuristicValue = heuristicValue;
                 bestBoard = newBoard;
             }
@@ -132,7 +132,22 @@ function calculateNumOfLeadingCells(board) {
 }
 
 function heuristicFunction(board) {
-    return board.flatMap(row => row).reduce((sum, cell) => (cell == BOARD_CELL_STATE.OPEN) ? sum+1 : sum, 0);
+    const openCells = calculateNumOfLeadingCells(board);
+    let nearCenterCells = 0;
+    for(let y=0; y<board.length; y++) {
+        for(let x=0; x<board[y].length; x++) {
+            if(board[y][x] != BOARD_CELL_STATE.QUEEN) {
+                continue;
+            }
+            const isInVerticalCenter = (y) => y >= board.length - board.length / 4 && y <= board.length + board.length / 4;
+            const isInHorizontalCenter = (x) => x >= board[0].length - board[0].length / 4 && x <= board[0].length + board[0].length / 4;
+            if(isInVerticalCenter(y) && isInHorizontalCenter(x)) {
+                nearCenterCells++;
+            }
+        }
+    }
+
+    return openCells + nearCenterCells;
 }
 
 function testPosition(board, x, y) {
