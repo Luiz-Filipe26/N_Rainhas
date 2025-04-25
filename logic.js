@@ -90,11 +90,11 @@ function findPossibleSolution(queens, width, height) {
     let placedQueens = 0;
 
     while (placedQueens < queens && leadingCells > 0) {
-        const { minClosedCells, bestBoard } = findBestPosition(currentBoard);
+        const bestBoard = findBestPosition(currentBoard);
 
         if (!bestBoard) break;
 
-        leadingCells -= (minClosedCells + 1);
+        leadingCells = calculateNumOfLeadingCells(bestBoard);
         currentBoard = bestBoard;
         placedQueens++;
 
@@ -105,9 +105,8 @@ function findPossibleSolution(queens, width, height) {
 }
 
 
-
 function findBestPosition(board) {
-    let minClosedCells = Number.MAX_VALUE;
+    let maxHeuristicValue = 0;
     let bestBoard = null;
 
     for (let y = 0; y < board.length; y++) { //line
@@ -116,47 +115,51 @@ function findBestPosition(board) {
                 continue;
             }
 
-            const { newBoard, closedCells } = testPosition(board, x, y);
-            if (closedCells < minClosedCells) {
-                minClosedCells = closedCells;
+            const newBoard = testPosition(board, x, y);
+            const heuristicValue = heuristicFunction(newBoard);
+            if (heuristicValue >= maxHeuristicValue) {
+                maxHeuristicValue = heuristicValue;
                 bestBoard = newBoard;
             }
         }
     }
 
-    return { minClosedCells, bestBoard };
+    return bestBoard;
+}
+
+function calculateNumOfLeadingCells(board) {
+    return board.flatMap(row => row).reduce((sum, cell) => (cell == BOARD_CELL_STATE.OPEN) ? sum+1 : sum, 0);
+}
+
+function heuristicFunction(board) {
+    return board.flatMap(row => row).reduce((sum, cell) => (cell == BOARD_CELL_STATE.OPEN) ? sum+1 : sum, 0);
 }
 
 function testPosition(board, x, y) {
     const newBoard = copy2DArray(board);
-    let closedCells = 0;
 
     newBoard[y][x] = BOARD_CELL_STATE.QUEEN;
 
     for (let stepY = -1; stepY <= 1; stepY++) {
         for (let stepX = -1; stepX <= 1; stepX++) {
             if (stepX != 0 || stepY != 0) {
-                closedCells += traverseStraightPath(newBoard, x, y, stepX, stepY);
+                traverseStraightPath(newBoard, x, y, stepX, stepY);
             }
         }
     }
 
-    return { newBoard, closedCells }
+    return newBoard;
 }
 
 function traverseStraightPath(board, posX, posY, stepX, stepY) {
-    let closedCells = 0;
     let x = posX + stepX;
     let y = posY + stepY;
 
     while (x >= 0 && x < board[0].length && y >= 0 && y < board.length) {
         if (board[y][x] === BOARD_CELL_STATE.OPEN) {
             board[y][x] = BOARD_CELL_STATE.CLOSED;
-            closedCells++;
         }
         x += stepX;
         y += stepY;
     }
-
-    return closedCells;
 }
